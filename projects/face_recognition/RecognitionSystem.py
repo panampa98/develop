@@ -1,4 +1,5 @@
 import cv2
+import cv2.text
 import face_recognition as fr
 import numpy as np
 import mediapipe as mp
@@ -26,15 +27,84 @@ def biometric_log():
             res = face_mesh.process(frame_temp)
 
             # Result lists
-            pos_x = []
-            pos_y = []
-            temp_list = []
+            px = []
+            py = []
+            p_list = []
 
             if res.multi_face_landmarks:
                 # Extract face mesh
-                for face in res.multi_face_landmarks:
+                for face_landmark_list in res.multi_face_landmarks:
                     # Draw
-                    mp_draw.draw_landmarks(frame, face, face_mesh_object.FACEMESH_CONTOURS, draw_config, draw_config)
+                    mp_draw.draw_landmarks(image=frame,
+                                           landmark_list=face_landmark_list,
+                                           connections=face_mesh_object.FACEMESH_CONTOURS,
+                                           landmark_drawing_spec=draw_config,
+                                           connection_drawing_spec=draw_config)
+                    
+                    for id, points in enumerate(face_landmark_list.landmark):
+                        # Image shape
+                        h, w, c = frame.shape
+                        x, y = int(points.x * w), int(points.y * h)
+
+                        px.append(x)
+                        py.append(y)
+                        p_list.append([id, x, y])
+
+                        # 468 key points
+                        if len(p_list) == 468:
+                            # Right eye
+                            x1, y1 = p_list[145][1:]
+                            x2, y2 = p_list[159][1:]
+                            right_lenght = math.hypot(x2-x1, y2-y1)
+
+                            # Draw tracking points
+                            cv2.circle(frame, (x1,y1), 2, (255,0,0), cv2.FILLED)
+                            cv2.circle(frame, (x2,y2), 2, (255,0,0), cv2.FILLED)
+
+                            # Left eye
+                            x1, y1 = p_list[374][1:]
+                            x2, y2 = p_list[386][1:]
+                            left_lenght = math.hypot(x2-x1, y2-y1)
+
+                            # Draw tracking points
+                            cv2.circle(frame, (x1,y1), 2, (255,0,0), cv2.FILLED)
+                            cv2.circle(frame, (x2,y2), 2, (255,0,0), cv2.FILLED)
+
+                            # Face detection
+                            faces = face_detector.process(frame_temp)
+
+                            if faces.detections is not None:
+                                for face in faces.detections:
+                                    # Bbox: ID, BBOX, SCORE
+                                    scr = face.score[0]
+                                    bbox = face.location_data.relative_bounding_box
+
+                                    # Threshold
+                                    if scr > th:
+                                        # Pixels
+                                        xi, yi, wi, hi = bbox.xmin, bbox.ymin, bbox.width, bbox.height
+                                        xi, yi, wi, hi = int(xi * w), int(yi * h), int(wi*w), int(hi*h)
+
+                                        cv2.circle(frame, (xi,yi), 4, (255,0,0), cv2.FILLED)
+                                        cv2.circle(frame, (xi,100), 4, (255,0,0), cv2.FILLED)
+                                        cv2.circle(frame, (100,yi), 4, (255,255,0), cv2.FILLED)
+                                        cv2.circle(frame, (xi+wi,yi+hi), 4, (0,0,255), cv2.FILLED)
+
+                                        # Offset
+                                        off_width = off_x * wi
+                                        xi = int(xi - int(off_width/2))
+                                        wi = int(wi + off_width)
+
+                                        off_height = off_y * hi
+                                        yi = int(yi - int(off_height/2))
+                                        hi = int(hi + off_height)
+
+                                        cv2.circle(frame, (xi,yi), 4, (255,0,0), cv2.FILLED)
+                                        cv2.circle(frame, (xi+wi,yi+hi), 4, (0,0,255), cv2.FILLED)
+
+                                        # Draw rectangle
+                                        cv2.rectangle(frame, (xi, yi, wi, hi), (255, 255, 255), 2)
+                        
         
         # Convert video
         img = Image.fromarray(frame)
@@ -112,9 +182,9 @@ count = 0
 sample = 0
 step = 0
 
-# Offset params
-off_x = 30
-off_y = 20
+# Offset params (Percentaje)
+off_x = 0.3
+off_y = 0.4
 
 # Threshold
 th = 0.5
