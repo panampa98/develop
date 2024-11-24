@@ -53,22 +53,39 @@ def biometric_log():
                         # 468 key points
                         if len(p_list) == 468:
                             # Right eye
-                            x1, y1 = p_list[145][1:]
-                            x2, y2 = p_list[159][1:]
-                            right_lenght = math.hypot(x2-x1, y2-y1)
+                            xr1, yr1 = p_list[145][1:]
+                            xr2, yr2 = p_list[159][1:]
+                            right_lenght = math.hypot(xr2-xr1, yr2-yr1)
 
                             # Draw tracking points
-                            cv2.circle(frame, (x1,y1), 2, (255,0,0), cv2.FILLED)
-                            cv2.circle(frame, (x2,y2), 2, (255,0,0), cv2.FILLED)
+                            cv2.circle(frame, (xr1,yr1), 2, (255,0,0), cv2.FILLED)
+                            cv2.circle(frame, (xr2,yr2), 2, (255,0,0), cv2.FILLED)
 
                             # Left eye
-                            x1, y1 = p_list[374][1:]
-                            x2, y2 = p_list[386][1:]
-                            left_lenght = math.hypot(x2-x1, y2-y1)
+                            xl1, yl1 = p_list[374][1:]
+                            xl2, yl2 = p_list[386][1:]
+                            left_lenght = math.hypot(xl2-xl1, yl2-yl1)
 
                             # Draw tracking points
-                            cv2.circle(frame, (x1,y1), 2, (255,0,0), cv2.FILLED)
-                            cv2.circle(frame, (x2,y2), 2, (255,0,0), cv2.FILLED)
+                            cv2.circle(frame, (xl1,yl1), 2, (255,0,0), cv2.FILLED)
+                            cv2.circle(frame, (xl2,yl2), 2, (255,0,0), cv2.FILLED)
+
+                            # Right and left parietals
+                            xrp, yrp = p_list[139][1:]
+                            xlp, ylp = p_list[368][1:]
+
+                            # Draw tracking points
+                            cv2.circle(frame, (xrp,yrp), 2, (255,0,0), cv2.FILLED)
+                            cv2.circle(frame, (xlp,ylp), 2, (255,0,0), cv2.FILLED)
+
+                            # Right and left eyebrows
+                            xreb, yreb = p_list[70][1:]
+                            xleb, yleb = p_list[300][1:]
+
+                            # Draw tracking points
+                            cv2.circle(frame, (xreb,yreb), 2, (255,0,0), cv2.FILLED)
+                            cv2.circle(frame, (xleb,yleb), 2, (255,0,0), cv2.FILLED)
+
 
                             # Face detection
                             faces = face_detector.process(frame_temp)
@@ -85,10 +102,10 @@ def biometric_log():
                                         xi, yi, wi, hi = bbox.xmin, bbox.ymin, bbox.width, bbox.height
                                         xi, yi, wi, hi = int(xi * w), int(yi * h), int(wi*w), int(hi*h)
 
-                                        cv2.circle(frame, (xi,yi), 4, (255,0,0), cv2.FILLED)
-                                        cv2.circle(frame, (xi,100), 4, (255,0,0), cv2.FILLED)
-                                        cv2.circle(frame, (100,yi), 4, (255,255,0), cv2.FILLED)
-                                        cv2.circle(frame, (xi+wi,yi+hi), 4, (0,0,255), cv2.FILLED)
+                                        # cv2.circle(frame, (xi,yi), 4, (255,0,0), cv2.FILLED)
+                                        # cv2.circle(frame, (xi,100), 4, (255,0,0), cv2.FILLED)
+                                        # cv2.circle(frame, (100,yi), 4, (255,255,0), cv2.FILLED)
+                                        # cv2.circle(frame, (xi+wi,yi+hi), 4, (0,0,255), cv2.FILLED)
 
                                         # Offset
                                         off_width = off_x * wi
@@ -99,11 +116,38 @@ def biometric_log():
                                         yi = int(yi - int(off_height/2))
                                         hi = int(hi + off_height)
 
+                                        # Error on borders
+                                        xi = 0 if xi < 0 else xi
+                                        yi = 0 if yi < 0 else yi
+                                        wi = 0 if wi < 0 else wi
+                                        hi = 0 if hi < 0 else hi
+
                                         cv2.circle(frame, (xi,yi), 4, (255,0,0), cv2.FILLED)
                                         cv2.circle(frame, (xi+wi,yi+hi), 4, (0,0,255), cv2.FILLED)
 
-                                        # Draw rectangle
-                                        cv2.rectangle(frame, (xi, yi, wi, hi), (255, 255, 255), 2)
+
+                                        # Verification steps
+                                        if step == 0:
+                                            # Draw face tracker rectangle (Rose)
+                                            cv2.rectangle(frame, (xi, yi, wi, hi), (255, 0, 255), 2)
+
+                                            # Step 0 image
+                                            h0, w0, c = step0_img.shape
+                                            frame[50:50+h0, 50:50+w0] = step0_img
+
+                                            # Step 1 image
+                                            h1, w1, c = step1_img.shape
+                                            frame[50:50+h1, 1030:1030+w1] = step1_img
+
+                                            # Step 2 image
+                                            h2, w2, c = step2_img.shape
+                                            frame[270:270+h2, 1030:1030+w2] = step2_img
+
+                                            # Centered face
+                                            if (xreb > xrp) & (xleb < xlp):
+                                                # Check image
+                                                h_ch, w_ch, c = check_img.shape
+                                                frame[165:165+h_ch, 1105:1105+w_ch] = check_img
                         
         
         # Convert video
@@ -173,8 +217,16 @@ def register_user():
 def login_user():
     print('Log')
 
+# Users' data folders
 users_path = 'projects/face_recognition/databases/users'
 faces_path = 'projects/face_recognition/databases/faces'
+
+
+# Step images
+check_img = cv2.imread('projects/face_recognition/setup/check.png')
+step0_img = cv2.imread('projects/face_recognition/setup/Step0.png')
+step1_img = cv2.imread('projects/face_recognition/setup/Step1.png')
+step2_img = cv2.imread('projects/face_recognition/setup/Step2.png')
 
 # Register variables
 blink = False
