@@ -199,10 +199,7 @@ def biometric_log():
 
                                             # Liveness check image
                                             hl, wl, c = liv_ch_img.shape
-                                            frame[50:50+hl, 50:50+wl] = liv_ch_img
-                                        
-            facereg_screen.protocol("WM_DELETE_WINDOW", close_window)
-                        
+                                            frame[50:50+hl, 50:50+wl] = liv_ch_img            
         
         # Convert video
         img = Image.fromarray(frame)
@@ -254,6 +251,9 @@ def register_user():
             facereg_screen = Toplevel(main_screen)
             facereg_screen.title('BIOMETRIC REGISTER')
             facereg_screen.geometry('1280x720')
+
+            # Create close protocol after create the screen
+            facereg_screen.protocol("WM_DELETE_WINDOW", close_window)
 
             # Label video
             lbl_video = Label(facereg_screen)
