@@ -67,8 +67,8 @@ def biometric_log():
                             left_lenght = math.hypot(xl2-xl1, yl2-yl1)
 
                             # Draw tracking points
-                            cv2.circle(frame, (xl1,yl1), 2, (255,0,0), cv2.FILLED)
-                            cv2.circle(frame, (xl2,yl2), 2, (255,0,0), cv2.FILLED)
+                            cv2.circle(frame, (xl1,yl1), 2, (0,255,0), cv2.FILLED)
+                            cv2.circle(frame, (xl2,yl2), 2, (0,255,0), cv2.FILLED)
 
                             # Right and left parietals
                             xrp, yrp = p_list[139][1:]
@@ -76,7 +76,7 @@ def biometric_log():
 
                             # Draw tracking points
                             cv2.circle(frame, (xrp,yrp), 2, (255,0,0), cv2.FILLED)
-                            cv2.circle(frame, (xlp,ylp), 2, (255,0,0), cv2.FILLED)
+                            cv2.circle(frame, (xlp,ylp), 2, (0,255,0), cv2.FILLED)
 
                             # Right and left eyebrows
                             xreb, yreb = p_list[70][1:]
@@ -84,7 +84,7 @@ def biometric_log():
 
                             # Draw tracking points
                             cv2.circle(frame, (xreb,yreb), 2, (255,0,0), cv2.FILLED)
-                            cv2.circle(frame, (xleb,yleb), 2, (255,0,0), cv2.FILLED)
+                            cv2.circle(frame, (xleb,yleb), 2, (0,255,0), cv2.FILLED)
 
 
                             # Face detection
