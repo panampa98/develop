@@ -10,11 +10,14 @@ import imutils
 import math
 
 def biometric_log():
-    global facereg_screen, count, blink, img_info, step, video_cap, lbl_video
+    global facereg_screen, count, blink, img_info, liveness_flg, video_cap, lbl_video
 
     if video_cap is not None:
         ret, frame = video_cap.read()
 
+        # Frame to save
+        frame_tosave = frame.copy()
+        
         # Resize
         frame = imutils.resize(frame, width=1280)
 
@@ -127,7 +130,7 @@ def biometric_log():
 
 
                                         # Verification steps
-                                        if step == 0:
+                                        if liveness_flg == 0:
                                             # Draw face tracker rectangle (Rose)
                                             cv2.rectangle(frame, (xi, yi, wi, hi), (255, 0, 255), 2)
 
@@ -157,8 +160,31 @@ def biometric_log():
                                                     blink = False
                                                 
                                                 cv2.putText(frame, f'Blinks: {count}', (1070, 375), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255), 1)
+
+                                                # Blinks condition
+                                                if count >= 3:
+                                                    # Check image
+                                                    frame[385:385+h_ch, 1105:1105+w_ch] = check_img
+                                                    
+                                                    # Take photo on open eyes (Set a threshold enough to have really open eyes)
+                                                    if (right_lenght > 15) & (left_lenght > 15):
+                                                        # Take photo
+                                                        photo = frame_tosave[yi:yi+hi, xi:xi+wi]
+
+                                                        # Save photo
+                                                        cv2.imwrite(f'{faces_path}/{new_user}.png', photo)
+
+                                                        # Step 1
+                                                        liveness_flg = 1
                                             else:
                                                 count = 0
+                                        
+                                        if liveness_flg == 1:
+                                            cv2.rectangle(frame, (xi, yi, wi, hi), (0, 255, 0), 2)
+
+                                            # Liveness check image
+                                            hl, wl, c = liv_ch_img.shape
+                                            frame[50:50+hl, 50:50+wl] = liv_ch_img
                         
         
         # Convert video
@@ -174,11 +200,11 @@ def biometric_log():
         video_cap.release()
 
 def register_user():
-    global name_field, user_field, pass_field, video_cap, lbl_video, facereg_screen
+    global name_field, user_field, pass_field, video_cap, lbl_video, facereg_screen, new_user
     
-    name, new_user, pwd = name_field.get(), user_field.get(), pass_field.get()
+    new_name, new_user, new_pwd = name_field.get(), user_field.get(), pass_field.get()
 
-    if (len(name) == 0) | (len(new_user) == 0) | (len(pwd) == 0):
+    if (len(new_name) == 0) | (len(new_user) == 0) | (len(new_pwd) == 0):
         print('Please complete form')
     else:
         users_listdir = os.listdir(users_path)
@@ -193,13 +219,13 @@ def register_user():
         if new_user in users:
             print('User is not available. Please choose another user.')
         else:
-            info.append(name)
+            info.append(new_name)
             info.append(new_user)
-            info.append(pwd)
+            info.append(new_pwd)
 
             # Save new user
             f = open(f'{users_path}/{new_user}.txt', 'w')
-            f.write(f'{name},{new_user},{pwd}')
+            f.write(f'{new_name},{new_user},{new_pwd}')
             f.close()
 
             # Clear fields
@@ -238,12 +264,13 @@ check_img = cv2.cvtColor(cv2.imread('projects/face_recognition/setup/check.png')
 step0_img = cv2.cvtColor(cv2.imread('projects/face_recognition/setup/Step0.png'), cv2.COLOR_BGR2RGB)
 step1_img = cv2.cvtColor(cv2.imread('projects/face_recognition/setup/Step1.png'), cv2.COLOR_BGR2RGB)
 step2_img = cv2.cvtColor(cv2.imread('projects/face_recognition/setup/Step2.png'), cv2.COLOR_BGR2RGB)
+liv_ch_img = cv2.cvtColor(cv2.imread('projects/face_recognition/setup/LivenessCheck.png'), cv2.COLOR_BGR2RGB)
 
 # Register variables
 blink = False
 count = 0
 sample = 0
-step = 0
+liveness_flg = 0
 
 # Offset params (Percentaje)
 off_x = 0.3
