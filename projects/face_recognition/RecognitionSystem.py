@@ -148,6 +148,17 @@ def biometric_log():
                                                 # Check image
                                                 h_ch, w_ch, c = check_img.shape
                                                 frame[165:165+h_ch, 1105:1105+w_ch] = check_img
+
+                                                # Blink counter
+                                                if (right_lenght <= 10) & (left_lenght <= 10) & (blink == False):
+                                                    count += 1
+                                                    blink = True
+                                                elif (right_lenght > 10) & (left_lenght > 10) & (blink == True):
+                                                    blink = False
+                                                
+                                                cv2.putText(frame, f'Blinks: {count}', (1070, 375), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255), 1)
+                                            else:
+                                                count = 0
                         
         
         # Convert video
@@ -223,10 +234,10 @@ faces_path = 'projects/face_recognition/databases/faces'
 
 
 # Step images
-check_img = cv2.imread('projects/face_recognition/setup/check.png')
-step0_img = cv2.imread('projects/face_recognition/setup/Step0.png')
-step1_img = cv2.imread('projects/face_recognition/setup/Step1.png')
-step2_img = cv2.imread('projects/face_recognition/setup/Step2.png')
+check_img = cv2.cvtColor(cv2.imread('projects/face_recognition/setup/check.png'), cv2.COLOR_BGR2RGB)
+step0_img = cv2.cvtColor(cv2.imread('projects/face_recognition/setup/Step0.png'), cv2.COLOR_BGR2RGB)
+step1_img = cv2.cvtColor(cv2.imread('projects/face_recognition/setup/Step1.png'), cv2.COLOR_BGR2RGB)
+step2_img = cv2.cvtColor(cv2.imread('projects/face_recognition/setup/Step2.png'), cv2.COLOR_BGR2RGB)
 
 # Register variables
 blink = False
