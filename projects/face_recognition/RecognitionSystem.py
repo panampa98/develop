@@ -9,6 +9,21 @@ from PIL import Image, ImageTk
 import imutils
 import math
 
+
+def close_window():
+    global liveness_flg, count
+
+    liveness_flg = 0
+    count = 0
+    if facereg_screen:
+        facereg_screen.destroy()
+    else:
+        print('No facereg_screen')
+    if main_screen:
+        main_screen.destroy()
+    else:
+        print('No main_screen')
+
 def biometric_log():
     global facereg_screen, count, blink, img_info, liveness_flg, video_cap, lbl_video
 
@@ -27,16 +42,16 @@ def biometric_log():
 
         if ret==True:
             # Inference face mesh
-            res = face_mesh.process(frame_temp)
+            face_landmarks = face_mesh.process(frame_temp)
 
             # Result lists
             px = []
             py = []
             p_list = []
 
-            if res.multi_face_landmarks:
+            if face_landmarks.multi_face_landmarks:
                 # Extract face mesh
-                for face_landmark_list in res.multi_face_landmarks:
+                for face_landmark_list in face_landmarks.multi_face_landmarks:
                     # Draw
                     mp_draw.draw_landmarks(image=frame,
                                            landmark_list=face_landmark_list,
@@ -185,6 +200,8 @@ def biometric_log():
                                             # Liveness check image
                                             hl, wl, c = liv_ch_img.shape
                                             frame[50:50+hl, 50:50+wl] = liv_ch_img
+                                        
+            facereg_screen.protocol("WM_DELETE_WINDOW", close_window)
                         
         
         # Convert video
