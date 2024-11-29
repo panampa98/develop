@@ -9,6 +9,83 @@ from PIL import Image, ImageTk
 import imutils
 import math
 
+main_screen = None
+facereg_screen = None
+login_screen = None
+profile_screen = None
+
+def close_window():
+    global liveness_flg, count, facereg_screen, main_screen, login_screen, profile_screen
+
+    liveness_flg = 0
+    count = 0
+
+    # try:
+    #     if facereg_screen is not None:
+    #         facereg_screen.destroy()
+    # except Exception as e:
+    #     print(f"Error facereg_screen: {e}") 
+    
+    # try:
+    #     if profile_screen is not None:
+    #         profile_screen.destroy()
+    # except Exception as e:
+    #     print(f"Error profile_screen: {e}") 
+
+    # try:
+    #     if login_screen is not None:
+    #         login_screen.destroy()
+    # except Exception as e:
+    #     print(f"Error login_screen: {e}") 
+    
+    try:
+        if main_screen is not None:
+            main_screen.destroy()
+    except Exception as e:
+        print(f"Error main_screen: {e}") 
+
+
+def show_profile():
+    global liveness_flg, count, profile_screen, username
+
+    liveness_flg = 0
+    count = 0
+
+    # Face Recognition screen
+    profile_screen = Toplevel(login_screen)
+    profile_screen.title('PROFILE')
+    profile_screen.geometry('1280x720')
+
+    # Create close protocol after create the screen
+    profile_screen.protocol("WM_DELETE_WINDOW", close_window)
+
+    # Set background
+    bg_img = PhotoImage(file='projects/face_recognition/setup/Back2.png')
+    background = Label(image=bg_img, text='Profile')
+    background.place(x=0, y=0, relheight=1, relwidth=1)
+
+    # Get username's info
+    user_file = open(f'{users_path}/{username}.txt', 'r')
+    user_info = user_file.read().split(',')
+
+    name, user, pwd = user_info
+
+    txt1 = Label(profile_screen, text=f'WELCOME {name}')
+    txt1.place(x=580, y=50)
+
+    lbl_img = Label(profile_screen)
+    lbl_img.place(x=490, y=80)
+
+    user_img = cv2.imread(f'{faces_path}/{username}.png')
+    user_img = cv2.cvtColor(user_img, cv2.COLOR_RGB2BGR)
+    user_img = Image.fromarray(user_img)
+
+    img = ImageTk.PhotoImage(image=user_img)
+
+    lbl_img.configure(image=img)
+    lbl_img.image = img
+    
+
 
 def encode_faces(images):
     
@@ -27,23 +104,8 @@ def encode_faces(images):
     return encoded_faces
 
 
-def close_window():
-    global liveness_flg, count
-
-    liveness_flg = 0
-    count = 0
-    if facereg_screen:
-        facereg_screen.destroy()
-    else:
-        print('No facereg_screen')
-    if main_screen:
-        main_screen.destroy()
-    else:
-        print('No main_screen')
-
-
 def biometric_log():
-    global user_log_field, pass_log_field, video_cap, lbl_video, login_screen, log_user, faces_path, encoded_faces, users, images
+    global video_cap, lbl_video, login_screen, faces_path, encoded_faces, users, images, username, liveness_flg, blink, count
 
     if video_cap is not None:
         ret, frame = video_cap.read()
@@ -226,7 +288,19 @@ def biometric_log():
                                             for enc_face, found_face in zip(encod_faces, found_faces):
 
                                                 # Match face
-                                                math = fr.compare_faces(encoded_faces, enc_face)                                            
+                                                match = fr.compare_faces(encoded_faces, enc_face)
+
+                                                # Match error
+                                                err = fr.face_distance(encoded_faces, enc_face)
+
+                                                min_err = np.argmin(err)
+
+                                                if match[min_err]:
+                                                    # Get username
+                                                    username = users[min_err].upper()
+
+                                                    show_profile()
+
         
         # Convert video
         img = Image.fromarray(frame)
@@ -235,14 +309,14 @@ def biometric_log():
         # Show video
         lbl_video.configure(image=img)
         lbl_video.image = img
-        lbl_video.after(10, biometric_register)
+        lbl_video.after(10, biometric_log)
 
     else:
         video_cap.release()
 
 
 def biometric_register():
-    global facereg_screen, count, blink, img_info, liveness_flg, video_cap, lbl_video
+    global facereg_screen, count, blink, liveness_flg, video_cap, lbl_video
 
     if video_cap is not None:
         ret, frame = video_cap.read()
@@ -486,9 +560,7 @@ def register_user():
             print('Successful register')
 
 def login_user():
-    global user_log_field, pass_log_field, video_cap, lbl_video, login_screen, log_user, faces_path, encoded_faces, users, images
-    
-    log_user, log_pwd = user_log_field.get(), pass_log_field.get()
+    global video_cap, lbl_video, login_screen, faces_path, encoded_faces, users, images
 
     # Read face database
     images = []
@@ -513,13 +585,11 @@ def login_user():
     login_screen.title('BIOMETRIC LOGIN')
     login_screen.geometry('1280x720')
 
-    # # Set background
-    # bg_img = PhotoImage(file='projects/face_recognition/setup/Back2.png')
-    # background = Label(image=bg_img, text='Login')
-    # background.place(x=0, y=0, relheight=1, relwidth=1)
+    # Create close protocol after create the screen
+    login_screen.protocol("WM_DELETE_WINDOW", close_window)
 
     # Label video
-    lbl_video = Label(facereg_screen)
+    lbl_video = Label(login_screen)
     lbl_video.place(x=0, y=0)
 
     # Video capture
@@ -590,12 +660,6 @@ user_field.place(x=110, y=430)
 
 pass_field = Entry(main_screen, width=50)
 pass_field.place(x=110, y=540)
-
-# user_log_field = Entry(main_screen, width=50)
-# user_log_field.place(x=750, y=380)
-
-# pass_log_field = Entry(main_screen, width=50)
-# pass_log_field.place(x=750, y=500)
 
 
 # Create buttons
