@@ -20,29 +20,17 @@ def close_window():
     liveness_flg = 0
     count = 0
 
-    # try:
-    #     if facereg_screen is not None:
+    # if facereg_screen is not None:
     #         facereg_screen.destroy()
-    # except Exception as e:
-    #     print(f"Error facereg_screen: {e}") 
     
-    # try:
-    #     if profile_screen is not None:
+    # if profile_screen is not None:
     #         profile_screen.destroy()
-    # except Exception as e:
-    #     print(f"Error profile_screen: {e}") 
 
-    # try:
-    #     if login_screen is not None:
+    # if login_screen is not None:
     #         login_screen.destroy()
-    # except Exception as e:
-    #     print(f"Error login_screen: {e}") 
     
-    try:
-        if main_screen is not None:
+    if main_screen is not None:
             main_screen.destroy()
-    except Exception as e:
-        print(f"Error main_screen: {e}") 
 
 
 def show_profile():
