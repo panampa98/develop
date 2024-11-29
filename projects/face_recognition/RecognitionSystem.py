@@ -48,8 +48,7 @@ def show_profile():
     profile_screen.protocol("WM_DELETE_WINDOW", close_window)
 
     # Set background
-    bg_img = PhotoImage(file='projects/face_recognition/setup/Back2.png')
-    background = Label(image=bg_img, text='Profile')
+    background = Label(profile_screen, image=bg_profile_img, text='Profile')
     background.place(x=0, y=0, relheight=1, relwidth=1)
 
     # Get username's info
@@ -633,10 +632,12 @@ main_screen.title('FACE RECOGNITION SYSTEM')
 main_screen.geometry('1280x720')
 
 
-# Set background
+# Set background and read backgrounds
 bg_img = PhotoImage(file='projects/face_recognition/setup/Inicio.png')
 background = Label(image=bg_img, text='Inicio')
 background.place(x=0, y=0, relheight=1, relwidth=1)
+
+bg_profile_img = PhotoImage(file='projects/face_recognition/setup/Back2.png')
 
 
 # Create text input fields
