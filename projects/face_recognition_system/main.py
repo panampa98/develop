@@ -1,6 +1,24 @@
 import os
 import tkinter as tk
 from tkinter import PhotoImage
+import win32com.client
+import cv2
+from PIL import Image, ImageTk
+import imutils
+
+class Cameras():
+    def __init__(self):
+        self.n_cams = self.get_number_of_cams()
+    
+    def get_number_of_cams(self):
+        wmi = win32com.client.GetObject("winmgmts:")
+
+        n = 0
+        for device in wmi.InstancesOf("Win32_PnPEntity"):
+            if device.PNPClass == 'Camera':
+                n += 1
+        
+        return n
 
 class Users():
     def __init__(self, users_dir, faces_folder):
@@ -55,6 +73,8 @@ class FaceRecognition():
         self.Users = Users('projects/face_recognition_system/databases/users.txt',
                            'projects/face_recognition_system/databases/faces')
         
+        self.Cams = Cameras()
+
         self.main_screen = None
         self.facereg_screen = None
         
@@ -64,6 +84,11 @@ class FaceRecognition():
 
         self.user_field = None
         self.pass_field = None
+
+        self.video_cap = None
+        self.facereg_video = None
+        self.running = False  # Control the video cycle
+        self.update_id = None  # Stores the after identifier
 
         self.create_ui()
 
@@ -111,9 +136,21 @@ class FaceRecognition():
         # Create close protocol after create the screen
         self.facereg_screen.protocol("WM_DELETE_WINDOW", self.close_window)
 
+        self.label = tk.Label(self.facereg_screen, text="Select a camera")
+        self.label.pack(pady=10)
+
         # Label video
-        lbl_video = tk.Label(self.facereg_screen)
-        lbl_video.place(x=0, y=0)
+        self.facereg_video = tk.Label(self.facereg_screen)
+        self.facereg_video.place(x=0, y=0)
+
+        cams = ['No cameras found -1']
+        if self.Cams.n_cams > 0:
+            cams = [f'Camera {i}' for i in range(self.Cams.n_cams)]
+
+        # Create Dropdown to select cameras
+        self.camera_var = tk.StringVar(value=cams[0])  # Por defecto, la primera cámara
+        self.dropdown = tk.OptionMenu(self.facereg_screen, self.camera_var, *cams, command=self.select_camera)
+        self.dropdown.place(x=100, y=200)
     
     def close_window(self):
         if self.main_screen is not None:
@@ -130,6 +167,55 @@ class FaceRecognition():
     
     def signin_action(self):
         self.create_facereg_ui()
+    
+    def select_camera(self, selected_camera):
+        """Select the camera to capture video."""
+
+        # Detener la captura de la cámara anterior, si existe
+        self.running = False
+
+        if self.update_id:
+            self.facereg_video.after_cancel(self.update_id)  # Cancel the current cycle
+
+        # Release any previous capture
+        if self.video_cap and self.video_cap.isOpened():
+            self.video_cap.release()
+
+        # Get the index of the selected camera
+        camera_index = int(selected_camera.split()[-1])  # Extract the index (e.g., 'Camera 1' -> 1)
+
+        # Open the selected camera
+        self.video_cap = cv2.VideoCapture(camera_index, cv2.CAP_DSHOW)
+        self.video_cap.set(3, 1280)  # width
+        self.video_cap.set(4, 720)  # height
+        
+        self.label.config(text=f"Using {selected_camera}")
+        
+        # Start video update
+        self.running = True
+        self.update_video()
+    
+    def update_video(self):
+        if self.running and self.video_cap  and self.video_cap.isOpened():
+            ret, frame = self.video_cap.read()
+
+            if ret:
+                # Resize
+                frame = imutils.resize(frame, width=1280)
+                # Convert video
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                img = Image.fromarray(frame)
+                img = ImageTk.PhotoImage(image=img)
+
+                # Show video
+                self.facereg_video.configure(image=img)
+                self.facereg_video.image = img
+
+            # Continue updating video after 10ms
+            self.update_id = self.facereg_video.after(10, self.update_video)
+
+        else:
+            self.video_cap.release()
     
 if __name__ == "__main__":
     # Create the UI and pass the button functions
