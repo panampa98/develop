@@ -20,7 +20,7 @@ class Users():
     def add_user(self, user_info, user_face, check=False):
         self.check_dirs_and_folders()
 
-        if (check) | (not self.check_user(user_info[0])):
+        if (check) or (not self.check_user(user_info[0])):
             with open(self.users_dir, 'a') as f:
                 f.write(';'.join(map(str, user_info)) + '\n')
             print(f'Welcome {user_info[0]}.')
@@ -29,7 +29,7 @@ class Users():
         self.update_users()
 
         for user_info in self.users:
-            if (len(user_info) > 0) & (user_info[0] == user):
+            if (len(user_info) > 0) and (user_info[0] == user):
                 print(f'User exists. Choose another.')
                 return True
         return False
@@ -123,7 +123,7 @@ class FaceRecognition():
         user = self.user_field.get()
         pwd = self.pass_field.get()
 
-        if (len(user) != 0) & (len(pwd) != 0):
+        if (len(user) != 0) and (len(pwd) != 0):
             if not self.Users.check_user(user):
                 self.Users.add_user([user, pwd], None, True)
                 self.create_facereg_ui()
