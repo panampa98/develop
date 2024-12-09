@@ -2,3 +2,4 @@
 *.png
 *.jpg
 projects/face_recognition/databases/users/*
+__pycache__
