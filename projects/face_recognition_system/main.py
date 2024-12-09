@@ -1,10 +1,60 @@
-from tests.functions import signup, signin
+import os
 import tkinter as tk
 from tkinter import PhotoImage
+
+class Users():
+    def __init__(self, users_dir, faces_folder):
+        self.users_dir = users_dir
+        self.faces_folder = faces_folder
+        self.users = None
+        self.faces = None
+
+        self.check_dirs_and_folders()
+
+    def update_users(self):
+        self.check_dirs_and_folders()
+
+        with open(self.users_dir, 'r') as f:
+                self.users = [line.strip().split(';') for line in f if line.strip()]
+    
+    def add_user(self, user_info, user_face, check=False):
+        self.check_dirs_and_folders()
+
+        if (check) | (not self.check_user(user_info[0])):
+            with open(self.users_dir, 'a') as f:
+                f.write(';'.join(map(str, user_info)) + '\n')
+            print(f'Welcome {user_info[0]}.')
+    
+    def check_user(self, user):
+        self.update_users()
+
+        for user_info in self.users:
+            if (len(user_info) > 0) & (user_info[0] == user):
+                print(f'User exists. Choose another.')
+                return True
+        return False
+    
+    def check_dirs_and_folders(self):
+        dir = os.path.dirname(self.users_dir)
+        
+        # Check if dir exists
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+            print(f"Dir created: {dir}")
+        
+        # Check if file exists
+        if not os.path.exists(self.users_dir):
+            with open(self.users_dir, 'w') as f:
+                pass  # Create empty file
+            print(f"File created: {self.users_dir}")
+
 
 class FaceRecognition():
 
     def __init__(self):
+        self.Users = Users('projects/face_recognition_system/databases/users.txt',
+                           'projects/face_recognition_system/databases/faces')
+        
         self.main_screen = None
         self.facereg_screen = None
         
@@ -70,8 +120,13 @@ class FaceRecognition():
             self.main_screen.destroy()
     
     def register_action(self):
-        if (len(self.user_field.get()) != 0) & (len(self.pass_field.get()) != 0):
-            self.create_facereg_ui()
+        user = self.user_field.get()
+        pwd = self.pass_field.get()
+
+        if (len(user) != 0) & (len(pwd) != 0):
+            if not self.Users.check_user(user):
+                self.Users.add_user([user, pwd], None, True)
+                self.create_facereg_ui()
     
     def signin_action(self):
         self.create_facereg_ui()
