@@ -185,15 +185,16 @@ class FaceRecognition():
         camera_index = int(selected_camera.split()[-1])  # Extract the index (e.g., 'Camera 1' -> 1)
 
         # Open the selected camera
-        self.video_cap = cv2.VideoCapture(camera_index, cv2.CAP_DSHOW)
-        self.video_cap.set(3, 1280)  # width
-        self.video_cap.set(4, 720)  # height
-        
-        self.label.config(text=f"Using {selected_camera}")
-        
-        # Start video update
-        self.running = True
-        self.update_video()
+        if camera_index >= 0:
+            self.video_cap = cv2.VideoCapture(camera_index, cv2.CAP_DSHOW)
+            self.video_cap.set(3, 1280)  # width
+            self.video_cap.set(4, 720)  # height
+            
+            self.label.config(text=f"Using {selected_camera}")
+            
+            # Start video update
+            self.running = True
+            self.update_video()
     
     def update_video(self):
         if self.running and self.video_cap  and self.video_cap.isOpened():
