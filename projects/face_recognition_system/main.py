@@ -199,8 +199,8 @@ class FaceRecognition():
         # Open the selected camera
         if camera_index >= 0:
             self.video_cap = cv2.VideoCapture(camera_index, cv2.CAP_DSHOW)
-            self.video_cap.set(3, 1280)  # width
-            self.video_cap.set(4, 720)  # height
+            self.video_cap.set(3, 1280)     # width
+            self.video_cap.set(4, 720)      # height
             
             # Start video update
             self.running = True
@@ -217,9 +217,13 @@ class FaceRecognition():
                 # Resize
                 frame = imutils.resize(frame, width=1280)
                 
-                # Convert video
+                # Change color profile
                 frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+                frame = self.processs_frame(frame, frame_rgb, frame_tosave)
+                
+                # Convert video
                 img = Image.fromarray(frame)
                 img = ImageTk.PhotoImage(image=img)
 
@@ -232,6 +236,9 @@ class FaceRecognition():
 
         else:
             self.video_cap.release()
+
+    def processs_frame(self, frame, frame_rgb, frame_tosave):
+        return frame
     
 if __name__ == "__main__":
     # Create the UI and pass the button functions
