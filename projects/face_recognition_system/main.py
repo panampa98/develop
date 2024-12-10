@@ -6,7 +6,7 @@ import cv2
 from PIL import Image, ImageTk
 import imutils
 from customtkinter import CTkOptionMenu, StringVar
-
+import math
 import mediapipe as mp
 
 class FaceDetector():
@@ -24,6 +24,69 @@ class FaceDetector():
         self.face_detector = self.face_object.FaceDetection(min_detection_confidence=0.5, model_selection=1)
     
     def processs_frame(self, frame, frame_rgb, frame_tosave):
+        # Inference face mesh
+        face_landmarks = self.face_mesh.process(frame_rgb)
+
+        # Result lists
+        px = []
+        py = []
+        p_list = []
+
+        if face_landmarks.multi_face_landmarks:
+            # Extract face mesh
+            for face_landmark_list in face_landmarks.multi_face_landmarks:
+                # Draw
+                self.mp_draw.draw_landmarks(image=frame,
+                                            landmark_list=face_landmark_list,
+                                            connections=self.face_mesh_object.FACEMESH_CONTOURS,
+                                            landmark_drawing_spec=self.draw_config,
+                                            connection_drawing_spec=self.draw_config)
+
+                for id, points in enumerate(face_landmark_list.landmark):
+                    # Image shape
+                    h, w, c = frame.shape
+                    x, y = int(points.x * w), int(points.y * h)
+
+                    px.append(x)
+                    py.append(y)
+                    p_list.append([id, x, y])
+
+                    # 468 key points
+                    if len(p_list) == 468:
+                        # Right eye
+                        xr1, yr1 = p_list[145][1:]
+                        xr2, yr2 = p_list[159][1:]
+                        right_lenght = math.hypot(xr2-xr1, yr2-yr1)
+
+                        # Draw tracking points
+                        cv2.circle(frame, (xr1,yr1), 2, (255,0,0), cv2.FILLED)
+                        cv2.circle(frame, (xr2,yr2), 2, (255,0,0), cv2.FILLED)
+
+                        # Left eye
+                        xl1, yl1 = p_list[374][1:]
+                        xl2, yl2 = p_list[386][1:]
+                        left_lenght = math.hypot(xl2-xl1, yl2-yl1)
+
+                        # Draw tracking points
+                        cv2.circle(frame, (xl1,yl1), 2, (0,255,0), cv2.FILLED)
+                        cv2.circle(frame, (xl2,yl2), 2, (0,255,0), cv2.FILLED)
+
+                        # Right and left parietals
+                        xrp, yrp = p_list[139][1:]
+                        xlp, ylp = p_list[368][1:]
+
+                        # Draw tracking points
+                        cv2.circle(frame, (xrp,yrp), 2, (255,0,0), cv2.FILLED)
+                        cv2.circle(frame, (xlp,ylp), 2, (0,255,0), cv2.FILLED)
+
+                        # Right and left eyebrows
+                        xreb, yreb = p_list[70][1:]
+                        xleb, yleb = p_list[300][1:]
+
+                        # Draw tracking points
+                        cv2.circle(frame, (xreb,yreb), 2, (255,0,0), cv2.FILLED)
+                        cv2.circle(frame, (xleb,yleb), 2, (0,255,0), cv2.FILLED)
+
         return frame
 
 
