@@ -5,6 +5,7 @@ import win32com.client
 import cv2
 from PIL import Image, ImageTk
 import imutils
+from customtkinter import CTkOptionMenu, StringVar
 
 class Cameras():
     def __init__(self):
@@ -73,6 +74,13 @@ class FaceRecognition():
         self.Users = Users('projects/face_recognition_system/databases/users.txt',
                            'projects/face_recognition_system/databases/faces')
         
+        # Step images
+        self.check_img = cv2.cvtColor(cv2.imread('projects/face_recognition/setup/check.png'), cv2.COLOR_BGR2RGB)
+        self.step0_img = cv2.cvtColor(cv2.imread('projects/face_recognition/setup/Step0.png'), cv2.COLOR_BGR2RGB)
+        self.step1_img = cv2.cvtColor(cv2.imread('projects/face_recognition/setup/Step1.png'), cv2.COLOR_BGR2RGB)
+        self.step2_img = cv2.cvtColor(cv2.imread('projects/face_recognition/setup/Step2.png'), cv2.COLOR_BGR2RGB)
+        self.liv_ch_img = cv2.cvtColor(cv2.imread('projects/face_recognition/setup/LivenessCheck.png'), cv2.COLOR_BGR2RGB)
+        
         self.Cams = Cameras()
 
         self.main_screen = None
@@ -87,8 +95,8 @@ class FaceRecognition():
 
         self.video_cap = None
         self.facereg_video = None
-        self.running = False  # Control the video cycle
-        self.update_id = None  # Stores the after identifier
+        self.running = False        # Control the video cycle
+        self.update_id = None       # Stores the after identifier
 
         self.create_ui()
 
@@ -148,9 +156,13 @@ class FaceRecognition():
             cams = [f'Camera {i}' for i in range(self.Cams.n_cams)]
 
         # Create Dropdown to select cameras
-        self.camera_var = tk.StringVar(value=cams[0])  # Por defecto, la primera cámara
-        self.dropdown = tk.OptionMenu(self.facereg_screen, self.camera_var, *cams, command=self.select_camera)
-        self.dropdown.place(x=100, y=200)
+        camera_var = StringVar(value=cams[0])  # Por defecto, la primera cámara
+        dropdown = CTkOptionMenu(self.facereg_screen, variable=camera_var,
+                                      values=cams, command=self.select_camera,
+                                      bg_color='#1668CC', fg_color='#1668CC',
+                                      dropdown_fg_color='#1E1E1E', dropdown_hover_color='#22CC5E',
+                                      button_color='#1668CC', button_hover_color='#1668CC')
+        dropdown.place(x=50, y=50)
     
     def close_window(self):
         if self.main_screen is not None:
@@ -190,8 +202,6 @@ class FaceRecognition():
             self.video_cap.set(3, 1280)  # width
             self.video_cap.set(4, 720)  # height
             
-            self.label.config(text=f"Using {selected_camera}")
-            
             # Start video update
             self.running = True
             self.update_video()
@@ -201,9 +211,14 @@ class FaceRecognition():
             ret, frame = self.video_cap.read()
 
             if ret:
+                # Frame to save
+                frame_tosave = frame.copy()
+
                 # Resize
                 frame = imutils.resize(frame, width=1280)
+                
                 # Convert video
+                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 img = Image.fromarray(frame)
                 img = ImageTk.PhotoImage(image=img)
