@@ -7,19 +7,38 @@ from PIL import Image, ImageTk
 import imutils
 from customtkinter import CTkOptionMenu, StringVar
 
+import mediapipe as mp
+
+class FaceDetector():
+    def __init__(self):
+        # Draw tool
+        self.mp_draw = mp.solutions.drawing_utils
+        self.draw_config = self.mp_draw.DrawingSpec(thickness=1, circle_radius=1)
+
+        # Face mesh
+        self.face_mesh_object = mp.solutions.face_mesh
+        self.face_mesh = self.face_mesh_object.FaceMesh(max_num_faces=1, refine_landmarks=True)
+
+        # Face detector
+        self.face_object = mp.solutions.face_detection
+        self.face_detector = self.face_object.FaceDetection(min_detection_confidence=0.5, model_selection=1)
+    
+    def processs_frame(self, frame, frame_rgb, frame_tosave):
+        return frame
+
+
 class Cameras():
     def __init__(self):
         self.n_cams = self.get_number_of_cams()
     
     def get_number_of_cams(self):
         wmi = win32com.client.GetObject("winmgmts:")
-
         n = 0
         for device in wmi.InstancesOf("Win32_PnPEntity"):
             if device.PNPClass == 'Camera':
                 n += 1
-        
         return n
+
 
 class Users():
     def __init__(self, users_dir, faces_folder):
@@ -74,6 +93,8 @@ class FaceRecognition():
         self.Users = Users('projects/face_recognition_system/databases/users.txt',
                            'projects/face_recognition_system/databases/faces')
         
+        self.fd = FaceDetector()
+
         # Step images
         self.check_img = cv2.cvtColor(cv2.imread('projects/face_recognition/setup/check.png'), cv2.COLOR_BGR2RGB)
         self.step0_img = cv2.cvtColor(cv2.imread('projects/face_recognition/setup/Step0.png'), cv2.COLOR_BGR2RGB)
@@ -221,8 +242,8 @@ class FaceRecognition():
                 frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-                frame = self.processs_frame(frame, frame_rgb, frame_tosave)
-                
+                frame = self.fd.processs_frame(frame, frame_rgb, frame_tosave)
+
                 # Convert video
                 img = Image.fromarray(frame)
                 img = ImageTk.PhotoImage(image=img)
@@ -236,9 +257,6 @@ class FaceRecognition():
 
         else:
             self.video_cap.release()
-
-    def processs_frame(self, frame, frame_rgb, frame_tosave):
-        return frame
     
 if __name__ == "__main__":
     # Create the UI and pass the button functions
