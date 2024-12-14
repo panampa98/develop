@@ -10,7 +10,7 @@ import math
 import mediapipe as mp
 
 class FaceDetector():
-    def __init__(self):
+    def __init__(self, th=0.5, off_x=0.3, off_y=0.4):
         # Draw tool
         self.mp_draw = mp.solutions.drawing_utils
         self.draw_config = self.mp_draw.DrawingSpec(thickness=1, circle_radius=1)
@@ -22,6 +22,25 @@ class FaceDetector():
         # Face detector
         self.face_object = mp.solutions.face_detection
         self.face_detector = self.face_object.FaceDetection(min_detection_confidence=0.5, model_selection=1)
+
+        # Threshold
+        self.th = th
+
+        # Offset for face frame
+        self.off_x, self.off_y = off_x, off_y
+
+        # Face box enabler
+        self.flg_facebox = True
+
+        # Step images
+        self.check_img = cv2.cvtColor(cv2.imread('projects/face_recognition_system/images/check.png'), cv2.COLOR_BGR2RGB)
+        self.step0_img = cv2.cvtColor(cv2.imread('projects/face_recognition_system/images/step0.png'), cv2.COLOR_BGR2RGB)
+        self.step1_img = cv2.cvtColor(cv2.imread('projects/face_recognition_system/images/step1.png'), cv2.COLOR_BGR2RGB)
+        self.step2_img = cv2.cvtColor(cv2.imread('projects/face_recognition_system/images/step2.png'), cv2.COLOR_BGR2RGB)
+        self.liv_ch_img = cv2.cvtColor(cv2.imread('projects/face_recognition_system/images/verified.png'), cv2.COLOR_BGR2RGB)
+
+        # Step
+        self.step = 0
     
     def processs_frame(self, frame, frame_rgb, frame_tosave):
         # Inference face mesh
@@ -86,6 +105,65 @@ class FaceDetector():
                         # Draw tracking points
                         cv2.circle(frame, (xreb,yreb), 2, (255,0,0), cv2.FILLED)
                         cv2.circle(frame, (xleb,yleb), 2, (0,255,0), cv2.FILLED)
+
+                        # Face detection
+                        faces = self.face_detector.process(frame_rgb)
+
+                        if faces.detections is not None:
+                            for face in faces.detections:
+                                # Bbox: ID, BBOX, SCORE
+                                scr = face.score[0]
+                                bbox = face.location_data.relative_bounding_box
+
+                                # Step 0 image
+                                if self.step == 0:
+                                    h0, w0, c = self.step0_img.shape
+                                    frame[53:53+h0, 913:913+w0] = self.step0_img
+
+                                # Threshold
+                                if scr > self.th:
+                                    # Pixels
+                                    xi, yi, wi, hi = bbox.xmin, bbox.ymin, bbox.width, bbox.height
+                                    xi, yi, wi, hi = int(xi * w), int(yi * h), int(wi*w), int(hi*h)
+
+                                    # cv2.circle(frame, (xi,yi), 4, (255,0,0), cv2.FILLED)
+                                    # cv2.circle(frame, (xi,100), 4, (255,0,0), cv2.FILLED)
+                                    # cv2.circle(frame, (100,yi), 4, (255,255,0), cv2.FILLED)
+                                    # cv2.circle(frame, (xi+wi,yi+hi), 4, (0,0,255), cv2.FILLED)
+
+                                    # Offset
+                                    off_width = self.off_x * wi
+                                    xi = int(xi - int(off_width/2))
+                                    wi = int(wi + off_width)
+
+                                    off_height = self.off_y * hi
+                                    yi = int(yi - int(off_height/2))
+                                    hi = int(hi + off_height)
+
+                                    # Avoid error on borders
+                                    xi = 0 if xi < 0 else xi
+                                    yi = 0 if yi < 0 else yi
+                                    wi = 0 if wi < 0 else wi
+                                    hi = 0 if hi < 0 else hi
+
+                                    # Rectangular frame corners with offsets
+                                    # cv2.circle(frame, (xi,yi), 4, (255,0,0), cv2.FILLED)
+                                    # cv2.circle(frame, (xi+wi,yi+hi), 4, (0,0,255), cv2.FILLED)
+
+                                    # Draw face box
+                                    if self.flg_facebox:
+                                        # Draw face tracker rectangle (Rose)
+                                        cv2.rectangle(frame, (xi, yi, wi, hi), (255, 0, 255), 2)
+                                    
+                                # Step 1 image
+                                if self.step == 1:
+                                    h1, w1, c = self.step1_img.shape
+                                    frame[50:50+h1, 913:913+w1] = self.step1_img
+
+                                # Step 2 image
+                                if self.step == 1:
+                                    h2, w2, c = self.step2_img.shape
+                                    frame[270:270+h2, 913:913+w2] = self.step2_img
 
         return frame
 
@@ -157,13 +235,6 @@ class FaceRecognition():
                            'projects/face_recognition_system/databases/faces')
         
         self.fd = FaceDetector()
-
-        # Step images
-        self.check_img = cv2.cvtColor(cv2.imread('projects/face_recognition/setup/check.png'), cv2.COLOR_BGR2RGB)
-        self.step0_img = cv2.cvtColor(cv2.imread('projects/face_recognition/setup/Step0.png'), cv2.COLOR_BGR2RGB)
-        self.step1_img = cv2.cvtColor(cv2.imread('projects/face_recognition/setup/Step1.png'), cv2.COLOR_BGR2RGB)
-        self.step2_img = cv2.cvtColor(cv2.imread('projects/face_recognition/setup/Step2.png'), cv2.COLOR_BGR2RGB)
-        self.liv_ch_img = cv2.cvtColor(cv2.imread('projects/face_recognition/setup/LivenessCheck.png'), cv2.COLOR_BGR2RGB)
         
         self.Cams = Cameras()
 
