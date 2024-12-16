@@ -116,9 +116,10 @@ class FaceDetector():
                                 bbox = face.location_data.relative_bounding_box
 
                                 # Step 0 image
-                                if self.step == 0:
-                                    h0, w0, c = self.step0_img.shape
-                                    frame[53:53+h0, 913:913+w0] = self.step0_img
+                                h0, w0, c = self.step0_img.shape
+                                frame[195:195+h0, 0:0+w0] = self.step0_img
+
+                                cv2.putText(frame, f'{w} | {h}', (100, 275), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 0, 255), 1)
 
                                 # Threshold
                                 if scr > self.th:
@@ -141,11 +142,15 @@ class FaceDetector():
                                     hi = int(hi + off_height)
 
                                     # Avoid error on borders
-                                    xi = 0 if xi < 0 else xi
-                                    yi = 0 if yi < 0 else yi
-                                    wi = 0 if wi < 0 else wi
-                                    hi = 0 if hi < 0 else hi
+                                    if (xi < 0) or (yi < 0) or (xi+wi > w) or (yi+hi > h):
+                                        cv2.putText(frame, f'{xi} | {yi} | {wi} | {hi} | {xi+wi} | {yi+hi}', (100, 375), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 0, 255), 1)
+                                        wi = 0
+                                        hi = 0
 
+                                        self.step = 0
+                                    else:
+                                        self.step = 1
+                                    
                                     # Rectangular frame corners with offsets
                                     # cv2.circle(frame, (xi,yi), 4, (255,0,0), cv2.FILLED)
                                     # cv2.circle(frame, (xi+wi,yi+hi), 4, (0,0,255), cv2.FILLED)
@@ -161,7 +166,7 @@ class FaceDetector():
                                     frame[50:50+h1, 913:913+w1] = self.step1_img
 
                                 # Step 2 image
-                                if self.step == 1:
+                                if self.step == 2:
                                     h2, w2, c = self.step2_img.shape
                                     frame[270:270+h2, 913:913+w2] = self.step2_img
 
@@ -252,6 +257,9 @@ class FaceRecognition():
         self.facereg_video = None
         self.running = False        # Control the video cycle
         self.update_id = None       # Stores the after identifier
+
+        self.height = 720
+        self.width = 1280
 
         self.create_ui()
 
@@ -354,8 +362,8 @@ class FaceRecognition():
         # Open the selected camera
         if camera_index >= 0:
             self.video_cap = cv2.VideoCapture(camera_index, cv2.CAP_DSHOW)
-            self.video_cap.set(3, 1280)     # width
-            self.video_cap.set(4, 720)      # height
+            self.video_cap.set(3, self.width)     # width
+            self.video_cap.set(4, self.height)      # height
             
             # Start video update
             self.running = True
@@ -366,11 +374,21 @@ class FaceRecognition():
             ret, frame = self.video_cap.read()
 
             if ret:
+                # Resize
+                h, w, c = frame.shape
+                frame = imutils.resize(frame, width=self.width)
+
+                # Crop if necessary
+                if h < self.height:
+                    # Calculate coordinates for centered cropping
+                    crop_y_start = int((h*self.width/self.height - self.height) // 2)
+                    crop_y_end = crop_y_start + self.height
+
+                    # Crop the image to (self.width ; self.height)
+                    frame = frame[crop_y_start:crop_y_end, :]
+                
                 # Frame to save
                 frame_tosave = frame.copy()
-
-                # Resize
-                frame = imutils.resize(frame, width=1280)
                 
                 # Change color profile
                 frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
