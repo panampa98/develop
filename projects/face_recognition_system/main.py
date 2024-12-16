@@ -168,9 +168,9 @@ class FaceDetector():
                                     frame[50:50+h1, 913:913+w1] = self.step1_img
 
                                 # Step 2 image
-                                if self.step == 2:
-                                    h2, w2, c = self.step2_img.shape
-                                    frame[50:50+h2, 913:913+w2] = self.step2_img
+                                if self.step >= 2:
+                                    h1, w1, c = self.step2_img.shape
+                                    frame[50:50+h1, 913:913+w1] = self.step2_img
 
                                     # Blink counter
                                     if (right_lenght <= 10) & (left_lenght <= 10) & (blink_flg == False):
@@ -180,9 +180,29 @@ class FaceDetector():
                                         blink_flg = False
                                     
                                     cv2.putText(frame, f'{self.blink_count}', (1055, 140), cv2.FONT_HERSHEY_COMPLEX, 1.5, (255, 255, 255), 1)
+
+                                    # Blink condition
+                                    if self.blink_count >= 3:
+                                        self.step = 3
                                 else:
                                     self.blink_count = 0
                                     blink_flg = False
+
+                                if self.step == 3:
+                                    # Verified image
+                                    h1, w1, c = self.liv_ch_img.shape
+                                    frame[50:50+h1, 913:913+w1] = self.liv_ch_img
+                                    
+                                    # Take photo on open eyes (Set a threshold enough to have really open eyes)
+                                    if (right_lenght > 15) & (left_lenght > 15):
+                                        # Take photo
+                                        photo = frame_tosave[yi:yi+hi, xi:xi+wi]
+
+                                        # Save photo
+                                        # cv2.imwrite(f'{faces_path}/{new_user}.png', photo)
+
+                                        # Step 1
+                                        liveness_flg = 1
 
                         else:
                             # No faces detected
