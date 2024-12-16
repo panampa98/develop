@@ -34,7 +34,8 @@ class FaceDetector():
 
         # Step images
         self.check_img = cv2.cvtColor(cv2.imread('projects/face_recognition_system/images/check.png'), cv2.COLOR_BGR2RGB)
-        self.step0_img = cv2.cvtColor(cv2.imread('projects/face_recognition_system/images/step0.png'), cv2.COLOR_BGR2RGB)
+        self.nofaces_img = cv2.cvtColor(cv2.imread('projects/face_recognition_system/images/no_faces.png'), cv2.COLOR_BGR2RGB)
+        self.face_det_img = cv2.cvtColor(cv2.imread('projects/face_recognition_system/images/step0.png'), cv2.COLOR_BGR2RGB)
         self.step1_img = cv2.cvtColor(cv2.imread('projects/face_recognition_system/images/step1.png'), cv2.COLOR_BGR2RGB)
         self.step2_img = cv2.cvtColor(cv2.imread('projects/face_recognition_system/images/step2.png'), cv2.COLOR_BGR2RGB)
         self.liv_ch_img = cv2.cvtColor(cv2.imread('projects/face_recognition_system/images/verified.png'), cv2.COLOR_BGR2RGB)
@@ -115,11 +116,11 @@ class FaceDetector():
                                 scr = face.score[0]
                                 bbox = face.location_data.relative_bounding_box
 
-                                # Step 0 image
-                                h0, w0, c = self.step0_img.shape
-                                frame[195:195+h0, 0:0+w0] = self.step0_img
+                                # Face detected image
+                                h0, w0, c = self.face_det_img.shape
+                                frame[195:195+h0, 0:0+w0] = self.face_det_img
 
-                                cv2.putText(frame, f'{w} | {h}', (100, 275), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 0, 255), 1)
+                                cv2.putText(frame, f'{w} | {h}', (100, 280), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 0, 255), 1)
 
                                 # Threshold
                                 if scr > self.th:
@@ -140,16 +141,6 @@ class FaceDetector():
                                     off_height = self.off_y * hi
                                     yi = int(yi - int(off_height/2))
                                     hi = int(hi + off_height)
-
-                                    # Avoid error on borders
-                                    if (xi < 0) or (yi < 0) or (xi+wi > w) or (yi+hi > h):
-                                        cv2.putText(frame, f'{xi} | {yi} | {wi} | {hi} | {xi+wi} | {yi+hi}', (100, 375), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 0, 255), 1)
-                                        wi = 0
-                                        hi = 0
-
-                                        self.step = 0
-                                    else:
-                                        self.step = 1
                                     
                                     # Rectangular frame corners with offsets
                                     # cv2.circle(frame, (xi,yi), 4, (255,0,0), cv2.FILLED)
@@ -159,6 +150,17 @@ class FaceDetector():
                                     if self.flg_facebox:
                                         # Draw face tracker rectangle (Rose)
                                         cv2.rectangle(frame, (xi, yi, wi, hi), (255, 0, 255), 2)
+
+                                    # Avoid error on borders
+                                    if (xi < 0) or (yi < 0) or (xi+wi > w) or (yi+hi > h):
+                                        cv2.putText(frame, f'{xi} | {yi} | {wi} | {hi} | {xi+wi} | {yi+hi}', (100, 375), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 0, 255), 1)
+                                        wi = 0
+                                        hi = 0
+
+                                        self.step = 1
+                                    # Centered face
+                                    elif (xreb > xrp) & (xleb < xlp):
+                                        self.step = 2
                                     
                                 # Step 1 image
                                 if self.step == 1:
@@ -168,7 +170,12 @@ class FaceDetector():
                                 # Step 2 image
                                 if self.step == 2:
                                     h2, w2, c = self.step2_img.shape
-                                    frame[270:270+h2, 913:913+w2] = self.step2_img
+                                    frame[50:50+h2, 913:913+w2] = self.step2_img
+                        else:
+                            # No faces detected
+                            h0, w0, c = self.nofaces_img.shape
+                            frame[195:195+h0, 0:0+w0] = self.nofaces_img
+                            self.step = 0
 
         return frame
 
