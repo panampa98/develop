@@ -128,11 +128,6 @@ class FaceDetector():
                                     xi, yi, wi, hi = bbox.xmin, bbox.ymin, bbox.width, bbox.height
                                     xi, yi, wi, hi = int(xi * w), int(yi * h), int(wi*w), int(hi*h)
 
-                                    # cv2.circle(frame, (xi,yi), 4, (255,0,0), cv2.FILLED)
-                                    # cv2.circle(frame, (xi,100), 4, (255,0,0), cv2.FILLED)
-                                    # cv2.circle(frame, (100,yi), 4, (255,255,0), cv2.FILLED)
-                                    # cv2.circle(frame, (xi+wi,yi+hi), 4, (0,0,255), cv2.FILLED)
-
                                     # Offset
                                     off_width = self.off_x * wi
                                     xi = int(xi - int(off_width/2))
