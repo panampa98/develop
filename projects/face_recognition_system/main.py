@@ -42,6 +42,9 @@ class FaceDetector():
 
         # Step
         self.step = 0
+
+        #Blink counts
+        self.blink_count = 0
     
     def processs_frame(self, frame, frame_rgb, frame_tosave):
         # Inference face mesh
@@ -110,6 +113,8 @@ class FaceDetector():
                         # Face detection
                         faces = self.face_detector.process(frame_rgb)
 
+                        blink_flg = False
+
                         if faces.detections is not None:
                             for face in faces.detections:
                                 # Bbox: ID, BBOX, SCORE
@@ -166,11 +171,25 @@ class FaceDetector():
                                 if self.step == 2:
                                     h2, w2, c = self.step2_img.shape
                                     frame[50:50+h2, 913:913+w2] = self.step2_img
+
+                                    # Blink counter
+                                    if (right_lenght <= 10) & (left_lenght <= 10) & (blink_flg == False):
+                                        self.blink_count += 1
+                                        blink_flg = True
+                                    elif (right_lenght > 10) & (left_lenght > 10) & (blink_flg == True):
+                                        blink_flg = False
+                                    
+                                    cv2.putText(frame, f'{self.blink_count}', (1055, 140), cv2.FONT_HERSHEY_COMPLEX, 1.5, (255, 255, 255), 1)
+                                else:
+                                    self.blink_count = 0
+                                    blink_flg = False
+
                         else:
                             # No faces detected
                             h0, w0, c = self.nofaces_img.shape
                             frame[195:195+h0, 0:0+w0] = self.nofaces_img
                             self.step = 0
+
 
         return frame
 
