@@ -203,12 +203,6 @@ class FaceDetector():
 
                                         return frame, user_face
 
-                                        # # Save photo
-                                        # cv2.imwrite(f'{faces_path}/{new_user}.png', user_face)
-
-                                        # # Step 1
-                                        # liveness_flg = 1
-
                         else:
                             # No faces detected
                             h0, w0, c = self.nofaces_img.shape
