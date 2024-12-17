@@ -196,13 +196,15 @@ class FaceDetector():
                                     # Take photo on open eyes (Set a threshold enough to have really open eyes)
                                     if (right_lenght > 15) & (left_lenght > 15):
                                         # Take photo
-                                        photo = frame_tosave[yi:yi+hi, xi:xi+wi]
+                                        user_face = frame_tosave[yi:yi+hi, xi:xi+wi]
 
-                                        # Save photo
-                                        # cv2.imwrite(f'{faces_path}/{new_user}.png', photo)
+                                        return frame, user_face
 
-                                        # Step 1
-                                        liveness_flg = 1
+                                        # # Save photo
+                                        # cv2.imwrite(f'{faces_path}/{new_user}.png', user_face)
+
+                                        # # Step 1
+                                        # liveness_flg = 1
 
                         else:
                             # No faces detected
@@ -211,7 +213,7 @@ class FaceDetector():
                             self.step = 0
 
 
-        return frame
+        return frame, None
 
 
 class Cameras():
@@ -248,6 +250,9 @@ class Users():
         if (check) or (not self.check_user(user_info[0])):
             with open(self.users_dir, 'a') as f:
                 f.write(';'.join(map(str, user_info)) + '\n')
+            
+            # Save photo
+            cv2.imwrite(f'{self.faces_folder}/{user_info[0]}.png', user_face)
             print(f'Welcome {user_info[0]}.')
     
     def check_user(self, user):
@@ -262,7 +267,11 @@ class Users():
     def check_dirs_and_folders(self):
         dir = os.path.dirname(self.users_dir)
         
-        # Check if dir exists
+        # Check if directories exists
+        if not os.path.exists(self.faces_folder):
+            os.makedirs(self.faces_folder)
+            print(f"Dir created: {self.faces_folder}")
+        
         if not os.path.exists(dir):
             os.makedirs(dir)
             print(f"Dir created: {dir}")
@@ -301,6 +310,8 @@ class FaceRecognition():
 
         self.height = 720
         self.width = 1280
+
+        self.user_face = None
 
         self.create_ui()
 
@@ -378,7 +389,7 @@ class FaceRecognition():
 
         if (len(user) != 0) and (len(pwd) != 0):
             if not self.Users.check_user(user):
-                self.Users.add_user([user, pwd], None, True)
+                # self.Users.add_user([user, pwd], None, True)
                 self.create_facereg_ui()
     
     def signin_action(self):
@@ -435,7 +446,11 @@ class FaceRecognition():
                 frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-                frame = self.fd.processs_frame(frame, frame_rgb, frame_tosave)
+                frame, self.user_face = self.fd.processs_frame(frame, frame_rgb, frame_tosave)
+
+                # Register user with face
+                if self.user_face is not None:
+                    self.Users.add_user([self.user_field.get(), self.pass_field.get()], self.user_face)
 
                 # Convert video
                 img = Image.fromarray(frame)
