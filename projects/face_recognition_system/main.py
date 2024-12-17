@@ -312,6 +312,8 @@ class FaceRecognition():
 
         self.user_face = None
 
+        self.sign_in = False
+
         self.create_main_screen(self.register_action, self.signin_action)
 
     def run(self):
@@ -391,6 +393,7 @@ class FaceRecognition():
                 print(f'User exists. Choose another.')
     
     def signin_action(self):
+        self.sign_in = True
         self.create_face_detection_ui()
     
     def select_camera(self, selected_camera):
@@ -448,7 +451,8 @@ class FaceRecognition():
 
                 # Register user with face
                 if self.user_face is not None:
-                    self.Users.add_user([self.user_field.get(), self.pass_field.get()], self.user_face)
+                    if not self.sign_in:
+                        self.Users.add_user([self.user_field.get(), self.pass_field.get()], self.user_face)
 
                 # Convert video
                 img = Image.fromarray(frame)
