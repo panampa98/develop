@@ -260,7 +260,6 @@ class Users():
 
         for user_info in self.users:
             if (len(user_info) > 0) and (user_info[0] == user):
-                print(f'User exists. Choose another.')
                 return True
         return False
     
@@ -391,6 +390,8 @@ class FaceRecognition():
             if not self.Users.check_user(user):
                 # self.Users.add_user([user, pwd], None, True)
                 self.create_facereg_ui()
+            else:
+                print(f'User exists. Choose another.')
     
     def signin_action(self):
         self.create_facereg_ui()
