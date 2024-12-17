@@ -209,7 +209,6 @@ class FaceDetector():
                             frame[195:195+h0, 0:0+w0] = self.nofaces_img
                             self.step = 0
 
-
         return frame, None
     
     def find_faces(self, frame_rgb, users, user_faces):
@@ -222,7 +221,6 @@ class FaceDetector():
 
             # Match error
             err = fr.face_distance(user_faces, enc_face)
-
             min_err = np.argmin(err)
 
             if match[min_err]:
