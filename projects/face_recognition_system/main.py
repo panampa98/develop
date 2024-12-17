@@ -8,6 +8,9 @@ import imutils
 from customtkinter import CTkOptionMenu, StringVar
 import math
 import mediapipe as mp
+import face_recognition as fr
+import numpy as np
+
 
 class FaceDetector():
     def __init__(self, th=0.5, off_x=0.3, off_y=0.4):
@@ -214,6 +217,25 @@ class FaceDetector():
 
 
         return frame, None
+    
+    def find_faces(self, frame_rgb, users, user_faces):
+        found_faces = fr.face_locations(frame_rgb)
+        encod_faces = fr.face_encodings(frame_rgb, found_faces)
+
+        for enc_face, found_face in zip(encod_faces, found_faces):
+            # Match face
+            match = fr.compare_faces(user_faces, enc_face)
+
+            # Match error
+            err = fr.face_distance(user_faces, enc_face)
+
+            min_err = np.argmin(err)
+
+            if match[min_err]:
+                # Get username
+                return users[min_err]   # .upper()
+        
+        return None
 
 
 class Cameras():
@@ -280,7 +302,24 @@ class Users():
             with open(self.users_dir, 'w') as f:
                 pass  # Create empty file
             print(f"File created: {self.users_dir}")
+    
+    def get_users_and_faces(self):
+        faces = []
+        users = []
 
+        img_list = os.listdir(self.faces_folder)
+
+        # Read face images
+        for img_name in img_list:
+            img = cv2.imread(f'{self.faces_folder}/{img_name}')
+
+            # Save temporaly in a list
+            faces.append(img)
+
+            # Save user in a list
+            users.append(os.path.splitext(img_name)[0])
+        
+        return users, faces
 
 class FaceRecognition():
 
@@ -313,6 +352,9 @@ class FaceRecognition():
         self.user_face = None
 
         self.sign_in = False
+        self.users = None
+        self.user_faces = None
+        self.user_detected_flag = False
 
         self.create_main_screen(self.register_action, self.signin_action)
 
@@ -394,6 +436,10 @@ class FaceRecognition():
     
     def signin_action(self):
         self.sign_in = True
+
+        self.users, self.user_faces = self.Users.get_users_and_faces()
+        self.user_faces = self.encode_faces(self.user_faces)
+
         self.create_face_detection_ui()
     
     def select_camera(self, selected_camera):
@@ -450,9 +496,17 @@ class FaceRecognition():
                 frame, self.user_face = self.fd.processs_frame(frame, frame_rgb, frame_tosave)
 
                 # Register user with face
-                if self.user_face is not None:
-                    if not self.sign_in:
+                if not self.sign_in:
+                    if self.user_face is not None:
                         self.Users.add_user([self.user_field.get(), self.pass_field.get()], self.user_face)
+                else:
+                    user_detected = None
+                    if not self.user_detected_flag:
+                        user_detected = self.fd.find_faces(frame_rgb, self.users, self.user_faces)
+
+                    if user_detected is not None:
+                        self.user_detected_flag = True
+                        print(f'Welcome {user_detected}')
 
                 # Convert video
                 img = Image.fromarray(frame)
@@ -467,6 +521,21 @@ class FaceRecognition():
 
         else:
             self.video_cap.release()
+    
+    def encode_faces(self, images):
+        encoded_faces = []
+
+        for img in images:
+            # Color
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+            # Encode
+            cod = fr.face_encodings(img)[0]
+
+            # Save to list
+            encoded_faces.append(cod)
+        
+        return encoded_faces
     
 if __name__ == "__main__":
     # Create the UI and pass the button functions
