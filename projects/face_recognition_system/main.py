@@ -312,13 +312,10 @@ class FaceRecognition():
 
         self.user_face = None
 
-        self.create_ui()
+        self.create_main_screen(self.register_action, self.signin_action)
 
     def run(self):
         self.main_screen.mainloop()
-    
-    def create_ui(self):
-        self.create_main_screen(self.register_action, self.signin_action)
     
     def create_main_screen(self, register_action, signin_action):
         # Create screen
