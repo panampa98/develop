@@ -1,4 +1,5 @@
 .venv
+.vscode
 *.png
 *.jpg
 projects/face_recognition/databases/users/*
