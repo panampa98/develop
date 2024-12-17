@@ -349,7 +349,7 @@ class FaceRecognition():
         log_btn = tk.Button(self.main_screen, text='Login', image=self.log_img, command=self.signin_action)
         log_btn.place(x=786, y=578)
 
-    def create_facereg_ui(self):
+    def create_face_detection_ui(self):
         # Face Recognition screen
         self.facereg_screen = tk.Toplevel(self.main_screen)
         self.facereg_screen.title('BIOMETRIC REGISTER')
@@ -389,12 +389,12 @@ class FaceRecognition():
         if (len(user) != 0) and (len(pwd) != 0):
             if not self.Users.check_user(user):
                 # self.Users.add_user([user, pwd], None, True)
-                self.create_facereg_ui()
+                self.create_face_detection_ui()
             else:
                 print(f'User exists. Choose another.')
     
     def signin_action(self):
-        self.create_facereg_ui()
+        self.create_face_detection_ui()
     
     def select_camera(self, selected_camera):
         """Select the camera to capture video."""
