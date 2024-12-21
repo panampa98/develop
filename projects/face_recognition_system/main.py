@@ -208,6 +208,8 @@ class FaceDetector():
                             h0, w0, c = self.nofaces_img.shape
                             frame[195:195+h0, 0:0+w0] = self.nofaces_img
                             self.step = 0
+                            self.blink_count = 0
+                            blink_flg = False
 
         return frame, None
     
@@ -228,6 +230,9 @@ class FaceDetector():
                 return users[min_err]   # .upper()
         
         return None
+    
+    def get_step(self):
+        return self.step
 
 
 class Cameras():
@@ -486,17 +491,22 @@ class FaceRecognition():
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
                 frame, self.user_face = self.fd.processs_frame(frame, frame_rgb, frame_tosave)
+                step = self.fd.get_step()
+
+                # Restart detection flag when step is not 3   
+                if (step != 3):
+                    self.user_detected_flag = False
 
                 # Register user with face
                 if not self.sign_in:
                     if self.user_face is not None:
                         self.Users.add_user([self.user_field.get(), self.pass_field.get()], self.user_face)
-                else:
+                elif self.user_face is not None:
                     user_detected = None
                     if not self.user_detected_flag:
                         user_detected = self.fd.find_faces(frame_rgb, self.users, self.user_faces)
 
-                    if user_detected is not None:
+                    if (user_detected is not None) and (step == 3):
                         self.user_detected_flag = True
                         print(f'Welcome {user_detected}')
 
