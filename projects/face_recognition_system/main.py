@@ -48,6 +48,10 @@ class FaceDetector():
 
         #Blink counts
         self.blink_count = 0
+
+        # Face frame parameters
+        self.color_faceframe = (255, 0, 255)    # Magenta
+        self.width_faceframe = 2
     
     def processs_frame(self, frame, frame_rgb, frame_tosave):
         # Inference face mesh
@@ -152,7 +156,7 @@ class FaceDetector():
                                     # Draw face box
                                     if self.flg_facebox:
                                         # Draw face tracker rectangle (Rose)
-                                        cv2.rectangle(frame, (xi, yi, wi, hi), (255, 0, 255), 2)
+                                        cv2.rectangle(frame, (xi, yi, wi, hi), self.color_faceframe, self.width_faceframe)
 
                                     # Avoid error on borders
                                     if (xi < 0) or (yi < 0) or (xi+wi > w) or (yi+hi > h):
@@ -233,6 +237,10 @@ class FaceDetector():
     
     def get_step(self):
         return self.step
+    
+    def set_faceframe_params(self, color, width):
+        self.color_faceframe = color
+        self.width_faceframe = width
 
 
 class Cameras():
@@ -493,8 +501,11 @@ class FaceRecognition():
                 frame, self.user_face = self.fd.processs_frame(frame, frame_rgb, frame_tosave)
                 step = self.fd.get_step()
 
+                user_detected = None
+
                 # Restart detection flag when step is not 3   
                 if (step != 3):
+                    self.fd.set_faceframe_params((255, 0, 255), 2)    # Magenta
                     self.user_detected_flag = False
 
                 # Register user with face
@@ -502,13 +513,16 @@ class FaceRecognition():
                     if self.user_face is not None:
                         self.Users.add_user([self.name_field.get(), self.id_field.get()], self.user_face)
                 elif self.user_face is not None:
-                    user_detected = None
                     if not self.user_detected_flag:
                         user_detected = self.fd.find_faces(frame_rgb, self.users, self.user_faces)
 
                     if (user_detected is not None) and (step == 3):
                         self.user_detected_flag = True
+                        self.fd.set_faceframe_params((0, 255, 0), 6)    # Green
                         print(f'Welcome {user_detected}')
+                
+                    if (not self.user_detected_flag) and (step == 3):
+                        self.fd.set_faceframe_params((255, 0, 0), 6)    # Red
 
                 # Convert video
                 img = Image.fromarray(frame)
