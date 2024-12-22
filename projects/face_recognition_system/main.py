@@ -297,7 +297,7 @@ class Users():
         # Check if file exists
         if not os.path.exists(self.users_dir):
             with open(self.users_dir, 'w') as f:
-                pass  # Create empty file
+                id  # Create empty file
             print(f"File created: {self.users_dir}")
     
     def get_users_and_faces(self):
@@ -335,8 +335,8 @@ class FaceRecognition():
         self.reg_img = None
         self.log_img = None
 
-        self.user_field = None
-        self.pass_field = None
+        self.name_field = None
+        self.id_field = None
 
         self.video_cap = None
         self.facereg_video = None
@@ -372,11 +372,11 @@ class FaceRecognition():
         # bg_profile_img = tk.PhotoImage(file='projects/face_recognition/setup/Back2.png')
 
         # Create text input fields
-        self.user_field = tk.Entry(self.main_screen, width=23, font=("Arial", 18))
-        self.user_field.place(x=181, y=184)
+        self.name_field = tk.Entry(self.main_screen, width=23, font=("Arial", 18))
+        self.name_field.place(x=181, y=184)
 
-        self.pass_field = tk.Entry(self.main_screen, width=23, font=("Arial", 18), show='*')
-        self.pass_field.place(x=181, y=307)
+        self.id_field = tk.Entry(self.main_screen, width=23, font=("Arial", 18))
+        self.id_field.place(x=181, y=307)
 
         # Create buttons
         self.reg_img = PhotoImage(file='projects/face_recognition_system/images/RegButton.png')
@@ -421,12 +421,12 @@ class FaceRecognition():
             self.main_screen.destroy()
     
     def register_action(self):
-        user = self.user_field.get()
-        pwd = self.pass_field.get()
+        user_name = self.name_field.get()
+        user_id = self.id_field.get()
 
-        if (len(user) != 0) and (len(pwd) != 0):
-            if not self.Users.check_user(user):
-                # self.Users.add_user([user, pwd], None, True)
+        if (len(user_name) != 0) and (len(user_id) != 0):
+            if not self.Users.check_user(user_name):
+                # self.Users.add_user([user, user_id], None, True)
                 self.create_face_detection_ui()
             else:
                 print(f'User exists. Choose another.')
@@ -500,7 +500,7 @@ class FaceRecognition():
                 # Register user with face
                 if not self.sign_in:
                     if self.user_face is not None:
-                        self.Users.add_user([self.user_field.get(), self.pass_field.get()], self.user_face)
+                        self.Users.add_user([self.name_field.get(), self.id_field.get()], self.user_face)
                 elif self.user_face is not None:
                     user_detected = None
                     if not self.user_detected_flag:
@@ -540,7 +540,7 @@ class FaceRecognition():
         return encoded_faces
     
 if __name__ == "__main__":
-    # Create the UI and pass the button functions
+    # Create the UI and id the button functions
     app = FaceRecognition()
 
     # Start the main loop
