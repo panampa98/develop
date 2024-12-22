@@ -385,7 +385,7 @@ class FaceRecognition():
 
         self.log_img = PhotoImage(file='projects/face_recognition_system/images/LogButton.png')
         log_btn = tk.Button(self.main_screen, text='Login', image=self.log_img, command=self.signin_action)
-        log_btn.place(x=786, y=578)
+        log_btn.place(x=786, y=535)
 
     def create_face_detection_ui(self):
         # Face Recognition screen
