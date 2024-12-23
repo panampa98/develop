@@ -48,6 +48,7 @@ class FaceDetector():
 
         #Blink counts
         self.blink_count = 0
+        self.blink_flg = False
 
         # Face frame parameters
         self.color_faceframe = (255, 0, 255)    # Magenta
@@ -120,8 +121,6 @@ class FaceDetector():
                         # Face detection
                         faces = self.face_detector.process(frame_rgb)
 
-                        blink_flg = False
-
                         if faces.detections is not None:
                             for face in faces.detections:
                                 # Bbox: ID, BBOX, SCORE
@@ -134,6 +133,9 @@ class FaceDetector():
 
                                 cv2.putText(frame, f'{w} | {h}', (100, 280), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 0, 255), 1)
 
+                                right_rat = -1
+                                left_rat = -1
+                                
                                 # Threshold
                                 if scr > self.th:
                                     # Pixels
@@ -168,7 +170,12 @@ class FaceDetector():
                                     # Centered face
                                     elif (xreb > xrp) & (xleb < xlp):
                                         self.step = 2
-                                    
+
+                                        right_rat = round(100.0 * right_lenght / hi, 1)
+                                        left_rat = round(100.0 * left_lenght / hi, 1)
+                                else:
+                                    self.step = 1
+
                                 # Step 1 image
                                 if self.step == 1:
                                     h1, w1, c = self.step1_img.shape
@@ -180,20 +187,21 @@ class FaceDetector():
                                     frame[50:50+h1, 913:913+w1] = self.step2_img
 
                                     # Blink counter
-                                    if (right_lenght <= 10) & (left_lenght <= 10) & (blink_flg == False):
+                                    if (right_rat > 0) and (left_rat > 0) and (right_rat <= 1.5) and (left_rat <= 1.5) and (self.blink_flg == False):
                                         self.blink_count += 1
-                                        blink_flg = True
-                                    elif (right_lenght > 10) & (left_lenght > 10) & (blink_flg == True):
-                                        blink_flg = False
+                                        self.blink_flg = True
+                                    elif (right_rat > 3.4) and (left_rat > 3.4) and (self.blink_flg == True):
+                                        self.blink_flg = False
                                     
                                     cv2.putText(frame, f'{self.blink_count}', (1055, 140), cv2.FONT_HERSHEY_COMPLEX, 1.5, (255, 255, 255), 1)
+                                    cv2.putText(frame, f'{right_rat} | {left_rat}', (900, 220), cv2.FONT_HERSHEY_COMPLEX, 1.5, (255, 0, 255), 1)
 
                                     # Blink condition
                                     if self.blink_count >= 3:
                                         self.step = 3
                                 else:
                                     self.blink_count = 0
-                                    blink_flg = False
+                                    self.blink_flg = False
 
                                 if self.step == 3:
                                     # Verified image
@@ -201,7 +209,7 @@ class FaceDetector():
                                     frame[50:50+h1, 913:913+w1] = self.liv_ch_img
                                     
                                     # Take photo on open eyes (Set a threshold enough to have really open eyes)
-                                    if (right_lenght > 15) & (left_lenght > 15):
+                                    if (right_rat > 3.4) and (left_rat > 3.4):
                                         # Take photo
                                         user_face = frame_tosave[yi:yi+hi, xi:xi+wi]
 
@@ -213,7 +221,7 @@ class FaceDetector():
                             frame[195:195+h0, 0:0+w0] = self.nofaces_img
                             self.step = 0
                             self.blink_count = 0
-                            blink_flg = False
+                            self.blink_flg = False
 
         return frame, None
     
@@ -241,6 +249,10 @@ class FaceDetector():
     def set_faceframe_params(self, color, width):
         self.color_faceframe = color
         self.width_faceframe = width
+
+    def reset_params(self):
+        self.step = 0
+        self.blink_count = 0
 
 
 class Cameras():
@@ -452,6 +464,8 @@ class FaceRecognition():
 
         # Detener la captura de la cámara anterior, si existe
         self.running = False
+
+        self.fd.reset_params()
 
         if self.update_id:
             self.facereg_video.after_cancel(self.update_id)  # Cancel the current cycle
