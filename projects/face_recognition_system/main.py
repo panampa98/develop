@@ -131,7 +131,7 @@ class FaceDetector():
                                 h0, w0, c = self.face_det_img.shape
                                 frame[195:195+h0, 0:0+w0] = self.face_det_img
 
-                                cv2.putText(frame, f'{w} | {h}', (100, 280), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 0, 255), 1)
+                                # cv2.putText(frame, f'{w} | {h}', (100, 280), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 0, 255), 1)
 
                                 right_rat = -1
                                 left_rat = -1
@@ -162,7 +162,7 @@ class FaceDetector():
 
                                     # Avoid error on borders
                                     if (xi < 0) or (yi < 0) or (xi+wi > w) or (yi+hi > h):
-                                        cv2.putText(frame, f'{xi} | {yi} | {wi} | {hi} | {xi+wi} | {yi+hi}', (100, 375), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 0, 255), 1)
+                                        # cv2.putText(frame, f'{xi} | {yi} | {wi} | {hi} | {xi+wi} | {yi+hi}', (100, 375), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 0, 255), 1)
                                         wi = 0
                                         hi = 0
 
@@ -194,7 +194,7 @@ class FaceDetector():
                                         self.blink_flg = False
                                     
                                     cv2.putText(frame, f'{self.blink_count}', (1055, 140), cv2.FONT_HERSHEY_COMPLEX, 1.5, (255, 255, 255), 1)
-                                    cv2.putText(frame, f'{right_rat} | {left_rat}', (900, 220), cv2.FONT_HERSHEY_COMPLEX, 1.5, (255, 0, 255), 1)
+                                    # cv2.putText(frame, f'{right_rat} | {left_rat}', (900, 220), cv2.FONT_HERSHEY_COMPLEX, 1.5, (255, 0, 255), 1)
 
                                     # Blink condition
                                     if self.blink_count >= 3:
@@ -410,7 +410,7 @@ class FaceRecognition():
     def create_face_detection_ui(self):
         # Face Recognition screen
         self.facereg_screen = tk.Toplevel(self.main_screen)
-        self.facereg_screen.title('BIOMETRIC REGISTER')
+        self.facereg_screen.title('FACE DETECTOR')
         self.facereg_screen.geometry('1280x720')
 
         # Create close protocol after create the screen
